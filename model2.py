@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 from nolds import sampen, lyap_r
 from tensorflow.keras.optimizers import Adam
 
-# --- Step 1: Get Data (from your superior CSV file) ---
-# We no longer use yfinance, as it's missing data before 2007.
+# --- Step 1: Get Data (from your CSV file) ---
 print("Loading data from 'NIFTY 50.csv'...")
 try:
     data = pd.read_csv('NIFTY 50.csv')
@@ -38,7 +37,7 @@ except Exception as e:
 
 print(f"Successfully loaded data. Starts: {data.index.min()}, Ends: {data.index.max()}")
 
-# --- Step 2: Feature Engineering (Sharma-Inspired) ---
+# --- Step 2: Feature Engineering ---
 print("Starting Feature Engineering...")
 
 # a) Baseline Features
@@ -102,8 +101,6 @@ def get_lle(x):
 data['LLE'] = data['Close'].rolling(window=100).apply(get_lle, raw=True)
 
 # --- Step 3: Load, Merge, and Align P/E Data ---
-# The data is already loaded! We just need to merge the P/E column
-# and create the P/E Band features.
 print("Merging P/E Data...")
 
 # Use 'left' merge to keep all 'Close' data and add 'P/E'
@@ -220,8 +217,6 @@ print(f"Normal (0) count in training: {counts[0]}")
 print(f"Crash (1) count in training: {counts[1]}")
 print(f"Calculated weight for '1': {weight_for_1:.2f}")
 
-# --- HEURISTIC: Use a FRACTION of the calculated weight ---
-# This is the systematic way to tune.
 weight_for_1_tuned = weight_for_1 / 3  
 
 class_weights = {0: weight_for_0, 1: weight_for_1_tuned}
@@ -272,7 +267,7 @@ print("Saving model to 'crash_predictor_model.keras'...")
 model.save('crash_predictor_model.keras')
 print("Model saved.")
 
-# --- Step 8: Evaluate the Model (The RIGHT Way) ---
+# --- Step 8: Evaluate the Model ---
 print("Evaluating Model...")
 
 # Get the raw predicted probabilities (e.g., 0.05, 0.25, 0.60)
@@ -310,7 +305,6 @@ y_pred_proba_test = y_pred_proba # Already have this from Step 8
 full_probabilities = np.concatenate((y_pred_proba_train, y_pred_proba_test))
 
 # --- 2. Get Full Date, Price, and Label Data ---
-# This data aligns perfectly with our 'y_sequences' array
 full_dates = data.index[TIME_STEPS:]
 full_close_prices = data['Close'].iloc[TIME_STEPS:]
 full_actual_labels = y_sequences # This is the y_train + y_test combined
@@ -362,5 +356,6 @@ ax2.legend(lines + lines2, labels + labels2, loc='upper left')
 
 fig.tight_layout()
 plt.show()
+
 
 print("Script Complete.")
